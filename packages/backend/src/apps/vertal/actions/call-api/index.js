@@ -57,7 +57,13 @@ export default defineAction({
 
   async run($) {
     const { method, url, headers, body } = $.step.parameters;
-    const request = { method: method || 'GET', url, headers: parseHeaders(headers) };
+    // O usuário aprovou ao montar e publicar o fluxo.
+    const request = {
+      method: method || 'GET',
+      url,
+      headers: parseHeaders(headers),
+      confirmed: true,
+    };
     if (body && request.method !== 'GET') request.body = String(body);
 
     const data = await callBroker($.auth.data.vertalKey, { op: 'api', request });
