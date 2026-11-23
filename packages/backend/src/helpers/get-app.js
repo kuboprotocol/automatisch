@@ -5,6 +5,7 @@ import cloneDeep from 'lodash/cloneDeep.js';
 import addAuthenticationSteps from '@/helpers/add-authentication-steps.js';
 import addReconnectionSteps from '@/helpers/add-reconnection-steps.js';
 import commonApiRequestAction from '@/helpers/common-api-request-action.js';
+import { withVertalBroker } from '@/helpers/vertal-broker.js';
 import { fileURLToPath, pathToFileURL } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -68,6 +69,7 @@ const getApp = async (appKey, stripFuncs = true) => {
   let appData = cloneDeep(await getAppDefaultExport(appKey));
 
   if (appData.auth) {
+    appData = withVertalBroker(appData);
     appData = addAuthenticationSteps(appData);
     appData = addReconnectionSteps(appData);
   }
@@ -82,7 +84,7 @@ const getApp = async (appKey, stripFuncs = true) => {
 
   // Inject API request action for apps that support connections and use HTTP APIs
   // Exclude apps that don't consume HTTP APIs even though they have connections
-  const nonHttpApps = ['postgresql', 'smtp'];
+  const nonHttpApps = ['postgresql', 'smtp', 'vertal'];
   if (appData.supportsConnections && !nonHttpApps.includes(appData.key)) {
     const processedApiRequestAction = addStaticSubsteps(
       'action',
