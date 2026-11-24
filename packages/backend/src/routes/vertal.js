@@ -116,6 +116,13 @@ export function describeArgument(arg) {
   return out;
 }
 
+// getApp move os argumentos para o substep "chooseTrigger".
+export function stepArguments(step) {
+  if (Array.isArray(step.arguments)) return step.arguments;
+  const setup = (step.substeps || []).find((s) => s.key === 'chooseTrigger');
+  return Array.isArray(setup?.arguments) ? setup.arguments : [];
+}
+
 export function describeApp(app) {
   const authFields = (app.auth?.fields || [])
     .filter((f) => f.key !== 'oAuthRedirectUrl' && !f.readOnly)
@@ -141,7 +148,7 @@ export function describeApp(app) {
       key: a.key,
       name: a.name,
       description: a.description,
-      arguments: (a.arguments || []).map(describeArgument),
+      arguments: stepArguments(a).map(describeArgument),
     })),
     searches: (app.triggers || [])
       .filter((t) => t.type !== 'webhook' && typeof t.run === 'function')
@@ -149,7 +156,7 @@ export function describeApp(app) {
         key: t.key,
         name: t.name,
         description: t.description,
-        arguments: (t.arguments || []).map(describeArgument),
+        arguments: stepArguments(t).map(describeArgument),
       })),
   };
 }
