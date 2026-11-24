@@ -76,13 +76,16 @@ export default defineAction({
     const { projectId, sectionId, labels, content, description } =
       $.step.parameters;
 
-    const labelsArray = labels.split(',');
+    const labelsArray = (labels || '')
+      .split(',')
+      .map((label) => label.trim())
+      .filter(Boolean);
 
     const payload = {
       content,
       description: description || null,
       project_id: projectId || null,
-      labels: labelsArray || null,
+      labels: labelsArray,
       section_id: sectionId || null,
     };
 

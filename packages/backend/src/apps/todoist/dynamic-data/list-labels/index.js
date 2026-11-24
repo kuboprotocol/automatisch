@@ -5,7 +5,7 @@ export default {
   async run($) {
     const response = await $.http.get('/labels');
 
-    response.data = response.data.map((label) => {
+    response.data = (Array.isArray(response.data) ? response.data : response.data?.results || []).map((label) => {
       return {
         value: label.name,
         name: label.name,

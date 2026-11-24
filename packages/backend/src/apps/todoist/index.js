@@ -12,7 +12,7 @@ export default defineApp({
   authDocUrl: '{DOCS_URL}/apps/todoist/connection',
   supportsConnections: true,
   baseUrl: 'https://todoist.com',
-  apiBaseUrl: 'https://api.todoist.com/rest/v2',
+  apiBaseUrl: 'https://api.todoist.com/api/v1',
   primaryColor: '#e44332',
   beforeRequest: [addAuthHeader],
   auth,

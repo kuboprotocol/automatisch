@@ -5,7 +5,7 @@ export default {
   async run($) {
     const response = await $.http.get('/projects');
 
-    response.data = response.data.map((project) => {
+    response.data = (Array.isArray(response.data) ? response.data : response.data?.results || []).map((project) => {
       return {
         value: project.id,
         name: project.name,
