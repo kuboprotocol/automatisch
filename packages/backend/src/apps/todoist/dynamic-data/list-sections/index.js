@@ -9,7 +9,7 @@ export default {
 
     const response = await $.http.get('/sections', { params });
 
-    response.data = response.data.map((section) => {
+    response.data = (Array.isArray(response.data) ? response.data : response.data?.results || []).map((section) => {
       return {
         value: section.id,
         name: section.name,

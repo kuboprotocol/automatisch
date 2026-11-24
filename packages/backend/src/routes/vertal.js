@@ -270,10 +270,19 @@ async function buildContext(body) {
     connection = await loadConnection(connectionId, appKey);
     if (!connection) return { status: 404, error: 'connection_not_found' };
   }
+  const params =
+    parameters && typeof parameters === 'object' ? { ...parameters } : {};
+  // Como no editor de fluxos: campo não preenchido chega como texto vazio.
+  const command =
+    body.kind === 'trigger'
+      ? app.triggers?.find((t) => t.key === body.key)
+      : app.actions?.find((a) => a.key === body.key);
+  for (const arg of command ? stepArguments(command) : []) {
+    if (params[arg.key] === undefined) params[arg.key] = arg.value ?? '';
+  }
   const step = {
     appKey,
-    parameters:
-      parameters && typeof parameters === 'object' ? { ...parameters } : {},
+    parameters: params,
     isTrigger: false,
     isAction: true,
   };
