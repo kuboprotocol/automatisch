@@ -1,6 +1,8 @@
 import defineApp from '../../helpers/define-app.js';
 import auth from './auth/index.js';
 import actions from './actions/index.js';
+import triggers from './triggers/index.js';
+import dynamicData from './dynamic-data/index.js';
 
 export default defineApp({
   name: 'Vertal',
@@ -13,4 +15,6 @@ export default defineApp({
   supportsConnections: true,
   auth,
   actions,
+  triggers,
+  dynamicData,
 });
