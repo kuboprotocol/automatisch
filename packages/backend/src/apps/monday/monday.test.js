@@ -41,7 +41,9 @@ describe('monday app', () => {
     expect(url.origin + url.pathname).toBe('https://auth.monday.com/oauth2/authorize');
     expect(url.searchParams.get('client_id')).toBe('mon-client');
     expect(url.searchParams.get('redirect_uri')).toBe(REDIRECT);
-    expect(url.searchParams.get('scope')).toBe(MONDAY_SCOPES.join(' '));
+    // Escopos vêm do app no Developer Center (não vão na URL).
+    expect(url.searchParams.has('scope')).toBe(false);
+    expect(MONDAY_SCOPES).toContain('boards:write');
     expect(url.searchParams.get('force_install_if_needed')).toBe('true');
     expect(url.searchParams.get('state')).toMatch(/^[0-9a-f]{32}$/);
   });
