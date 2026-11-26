@@ -1,16 +1,40 @@
-import { GRAPH_BASE, listPages, pageToken } from '../../helpers/meta-graph.js';
+import { GRAPH_BASE, graphList, listPages, pageToken } from '../../helpers/meta-graph.js';
 
+/**
+ * Contas profissionais do Instagram que a conexão alcança. Dois tipos de token:
+ * - Instagram API com login unificado (Facebook Login for Business, configuração com Instagram):
+ *   token de usuário de sistema da empresa; contas em /me/assigned_instagram_accounts, sem Página.
+ * - Login do Facebook clássico (token de usuário): contas ligadas às Páginas (/me/accounts).
+ */
 export async function listIgAccounts($) {
-  const pages = await listPages($);
-  return pages
-    .filter((p) => p.instagram_business_account?.id)
-    .map((p) => ({
-      id: p.instagram_business_account.id,
-      username: p.instagram_business_account.username,
-      name: p.instagram_business_account.name,
-      pageId: p.id,
-      pageName: p.name,
-    }));
+  const out = new Map();
+  try {
+    const assigned = await graphList($, '/me/assigned_instagram_accounts', { fields: 'id,username,name' });
+    for (const a of assigned) {
+      if (a?.id) out.set(String(a.id), { id: String(a.id), username: a.username, name: a.name, pageId: null, pageName: null });
+    }
+  } catch {
+    // token de usuário do Facebook: a borda não existe para ele
+  }
+  try {
+    const pages = await listPages($);
+    for (const p of pages) {
+      const ig = p.instagram_business_account;
+      if (!ig?.id) continue;
+      out.set(String(ig.id), { id: String(ig.id), username: ig.username, name: ig.name, pageId: p.id, pageName: p.name });
+    }
+  } catch (err) {
+    if (!out.size) throw err;
+  }
+  return [...out.values()];
+}
+
+/** Nome da conexão: "@usuario" das contas liberadas (o /me do token de sistema não é a conta). */
+export async function igScreenName($) {
+  const accounts = await listIgAccounts($);
+  if (!accounts.length) return null;
+  const names = accounts.map((a) => (a.username ? `@${a.username}` : a.name || a.id));
+  return names.length > 2 ? `${names.slice(0, 2).join(', ')} +${names.length - 2}` : names.join(', ');
 }
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -36,21 +60,31 @@ export async function publishMedia($, igId, body, { waitMs = 40000 } = {}) {
 /** Página do Facebook ligada à conta do Instagram (as DMs passam pela Página). */
 export async function pageForIg($, igUserId) {
   const acc = (await listIgAccounts($)).find((a) => a.id === String(igUserId));
-  if (!acc) throw new Error('This Instagram account is not linked to any Facebook Page you manage');
-  return { pageId: acc.pageId, token: await pageToken($, acc.pageId), account: acc };
+  if (!acc) throw new Error('This Instagram account was not shared with this connection');
+  // Login unificado (sem Página): as chamadas vão na própria conta do Instagram, com o token da conexão.
+  if (!acc.pageId) return { pageId: null, token: null, account: acc, base: String(acc.id) };
+  return { pageId: acc.pageId, token: await pageToken($, acc.pageId), account: acc, base: acc.pageId };
+}
+
+/** Parâmetros de token: token da Página (login do Facebook) ou o da conexão (login unificado). */
+function tokenOpts(token) {
+  return token ? { access_token: token } : {};
+}
+function tokenCfg(token) {
+  return token ? { additionalProperties: { skipAddingAuthHeader: true } } : {};
 }
 
 /** Conversas (DMs) da conta, mais recentes primeiro, com a última mensagem. */
 export async function listConversations($, igUserId, limit = 20) {
-  const { pageId, token } = await pageForIg($, igUserId);
-  const { data } = await $.http.get(`${GRAPH_BASE}/${encodeURIComponent(pageId)}/conversations`, {
+  const { base, token } = await pageForIg($, igUserId);
+  const { data } = await $.http.get(`${GRAPH_BASE}/${encodeURIComponent(base)}/conversations`, {
     params: {
       platform: 'instagram',
       fields: 'id,updated_time,participants,messages.limit(1){id,message,from,created_time}',
       limit: Math.min(Math.max(Number(limit) || 20, 1), 50),
-      access_token: token,
+      ...tokenOpts(token),
     },
-    additionalProperties: { skipAddingAuthHeader: true },
+    ...tokenCfg(token),
   });
   return (data.data || []).map((c) => {
     const other = (c.participants?.data || []).find((p) => p.id !== String(igUserId)) || {};
@@ -73,9 +107,9 @@ export async function conversationMessages($, igUserId, conversationId, limit = 
   const { data } = await $.http.get(`${GRAPH_BASE}/${encodeURIComponent(conversationId)}`, {
     params: {
       fields: `messages.limit(${Math.min(Math.max(Number(limit) || 20, 1), 50)}){id,message,from,to,created_time}`,
-      access_token: token,
+      ...tokenOpts(token),
     },
-    additionalProperties: { skipAddingAuthHeader: true },
+    ...tokenCfg(token),
   });
   return (data.messages?.data || []).map((m) => ({
     id: m.id,
@@ -89,11 +123,11 @@ export async function conversationMessages($, igUserId, conversationId, limit = 
 
 /** Envia texto numa DM. A Meta só aceita texto livre até 24 h depois da última mensagem do contato. */
 export async function sendDirectMessage($, igUserId, recipientId, text) {
-  const { pageId, token } = await pageForIg($, igUserId);
+  const { base, token } = await pageForIg($, igUserId);
   const { data } = await $.http.post(
-    `${GRAPH_BASE}/${encodeURIComponent(pageId)}/messages`,
-    { recipient: { id: String(recipientId) }, message: { text }, messaging_type: 'RESPONSE', access_token: token },
-    { additionalProperties: { skipAddingAuthHeader: true } }
+    `${GRAPH_BASE}/${encodeURIComponent(base)}/messages`,
+    { recipient: { id: String(recipientId) }, message: { text }, messaging_type: 'RESPONSE', ...tokenOpts(token) },
+    tokenCfg(token)
   );
   return data;
 }
