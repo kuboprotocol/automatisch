@@ -1,6 +1,6 @@
 import defineAction from '../../../helpers/define-action.js';
 import { dynamicArg, stringArg } from '../../../helpers/vertal-app-kit.js';
-import { publishMedia } from '../common.js';
+import { publishMedia, sendDirectMessage } from '../common.js';
 
 const account = dynamicArg('igUserId', 'Instagram account', 'listIgAccounts');
 
@@ -32,4 +32,21 @@ const publishReel = defineAction({
   },
 });
 
-export default [publishImage, publishReel];
+const sendMessage = defineAction({
+  name: 'Send direct message',
+  key: 'sendMessage',
+  description:
+    'Replies to an Instagram DM (text). Only works within 24 hours after the contact last wrote to you (Meta rule).',
+  arguments: [
+    account,
+    stringArg('recipientId', 'Recipient (Instagram-scoped ID from the conversations list)', { required: true }),
+    stringArg('text', 'Message', { required: true }),
+  ],
+  async run($) {
+    const { igUserId, recipientId, text } = $.step.parameters;
+    const data = await sendDirectMessage($, igUserId, recipientId, text);
+    $.setActionItem({ raw: data });
+  },
+});
+
+export default [publishImage, publishReel, sendMessage];
