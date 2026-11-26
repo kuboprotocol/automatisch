@@ -10,7 +10,9 @@ const verifyCredentials = async ($) => {
       client_secret: $.auth.data.clientSecret,
       code: $.auth.data.code,
       grant_type: 'authorization_code',
-      redirect_uri: $.auth.data.oAuthRedirectUrl,
+      redirect_uri:
+      $.app.auth.fields.find((field) => field.key == 'oAuthRedirectUrl')?.value ||
+      $.auth.data.oAuthRedirectUrl,
     },
     {
       headers: {

@@ -8,7 +8,9 @@ export default async function generateAuthUrl($) {
 
   const searchParams = new URLSearchParams({
     client_id: $.auth.data.clientId,
-    redirect_uri: $.auth.data.oAuthRedirectUrl,
+    redirect_uri:
+      $.app.auth.fields.find((field) => field.key == 'oAuthRedirectUrl')?.value ||
+      $.auth.data.oAuthRedirectUrl,
     scope: scopes.join(' '),
     response_type: 'code',
     state: Date.now().toString(),

@@ -4,7 +4,9 @@ import getBaseUrl from '../common/get-base-url.js';
 export default async function generateAuthUrl($) {
   const searchParams = new URLSearchParams({
     client_id: $.auth.data.clientId,
-    redirect_uri: $.auth.data.oAuthRedirectUrl,
+    redirect_uri:
+      $.app.auth.fields.find((field) => field.key == 'oAuthRedirectUrl')?.value ||
+      $.auth.data.oAuthRedirectUrl,
     response_type: 'code',
   });
 
