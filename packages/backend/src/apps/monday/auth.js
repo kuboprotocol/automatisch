@@ -1,6 +1,6 @@
 import { URLSearchParams } from 'node:url';
 import { newState, redirectField, redirectUri, textField } from '../../helpers/vertal-app-kit.js';
-import { MONDAY_AUTH, MONDAY_SCOPES, getMe, screenNameOf } from './common.js';
+import { MONDAY_AUTH, getMe, screenNameOf } from './common.js';
 
 // clientId/clientSecret: cliente OAuth (do Vertal, ou app próprio do usuário).
 // apiToken: alternativa "Avançado" — token pessoal (Perfil → Desenvolvedores → Meus tokens); sem login OAuth.
@@ -23,7 +23,8 @@ export default {
       client_id: $.auth.data.clientId,
       redirect_uri: redirectUri($),
       state: newState(),
-      scope: MONDAY_SCOPES.join(' '),
+      // Sem "scope": o monday usa os escopos marcados no app (MONDAY_SCOPES). Mandar a lista na URL
+      // fez o monday responder "Invalid scope param" (26/11/2026).
       // Conta que ainda não instalou o app vê a tela de instalação antes do consentimento.
       force_install_if_needed: 'true',
     });
