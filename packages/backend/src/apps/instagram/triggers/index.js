@@ -9,7 +9,7 @@ const accounts = defineTrigger({
   name: 'List my Instagram accounts',
   key: 'listAccounts',
   pollInterval: 15,
-  description: 'Professional Instagram accounts linked to your Facebook Pages.',
+  description: 'Professional Instagram accounts shared with this connection (directly or through your Facebook Pages).',
   arguments: [],
   async run($) {
     pushItems($, await listIgAccounts($));

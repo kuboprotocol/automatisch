@@ -18,7 +18,7 @@ export function metaAuthFields(appKey) {
   ];
 }
 
-export function metaAuthUrl(scopes) {
+export function metaAuthUrl(scopes, { loginPrompt } = {}) {
   return async ($) => {
     const params = new URLSearchParams({
       client_id: $.auth.data.clientId,
@@ -26,8 +26,10 @@ export function metaAuthUrl(scopes) {
       state: newState(),
       response_type: 'code',
     });
-    if ($.auth.data.configId) params.set('config_id', $.auth.data.configId);
-    else params.set('scope', scopes.join(','));
+    if ($.auth.data.configId) {
+      params.set('config_id', $.auth.data.configId);
+      if (loginPrompt) params.set('prompt', loginPrompt);
+    } else params.set('scope', scopes.join(','));
     await $.auth.set({
       url: `https://www.facebook.com/${GRAPH_VERSION}/dialog/oauth?${params.toString()}`,
     });
@@ -72,10 +74,10 @@ export async function metaMe($) {
   return data;
 }
 
-export function metaAuth(appKey, scopes, { afterVerify } = {}) {
+export function metaAuth(appKey, scopes, { afterVerify, loginPrompt } = {}) {
   return {
     fields: metaAuthFields(appKey),
-    generateAuthUrl: metaAuthUrl(scopes),
+    generateAuthUrl: metaAuthUrl(scopes, { loginPrompt }),
     async verifyCredentials($) {
       await metaExchangeCode($);
       const me = await metaMe($);
