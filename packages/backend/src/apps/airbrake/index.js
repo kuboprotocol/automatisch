@@ -4,6 +4,7 @@ import auth from './auth/index.js';
 import addApiKey from './common/add-api-key.js';
 import triggers from './triggers/index.js';
 import dynamicData from './dynamic-data/index.js';
+import actions from './actions/index.js';
 
 export default defineApp({
   name: 'Airbrake',
@@ -17,5 +18,6 @@ export default defineApp({
   beforeRequest: [setBaseUrl, addApiKey],
   auth,
   triggers,
+  actions,
   dynamicData,
 });

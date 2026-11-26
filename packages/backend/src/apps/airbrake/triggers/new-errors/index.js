@@ -40,7 +40,7 @@ export default defineTrigger({
         params,
       });
 
-      if (!data.count === 0) {
+      if (!data?.groups?.length) {
         return;
       }
 

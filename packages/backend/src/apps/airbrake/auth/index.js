@@ -1,42 +1,19 @@
 import verifyCredentials from './verify-credentials.js';
 import isStillVerified from './is-still-verified.js';
+import { textField } from '../../../helpers/vertal-app-kit.js';
 
+// A API do Airbrake (v4) só aceita chave: User API key (perfil do usuário). Não existe OAuth.
 export default {
   fields: [
-    {
-      key: 'screenName',
-      label: 'Screen Name',
-      type: 'string',
-      required: true,
-      readOnly: false,
-      value: null,
-      placeholder: null,
-      description:
-        'Screen name of your connection to be used on Automatisch UI.',
-      clickToCopy: false,
-    },
-    {
-      key: 'instanceUrl',
-      label: 'Instance URL',
-      type: 'string',
-      required: true,
-      readOnly: false,
-      value: null,
-      placeholder: null,
-      description: 'Your subdomain as https://{{subdomain}}.airbrake.io',
-      clickToCopy: false,
-    },
-    {
-      key: 'authToken',
-      label: 'Auth Token',
-      type: 'string',
-      required: true,
-      readOnly: false,
-      value: null,
-      placeholder: null,
-      description: 'Airbrake Auth Token of your account.',
-      clickToCopy: false,
-    },
+    textField('screenName', 'Screen Name', { description: 'Name of this connection.' }),
+    textField('instanceUrl', 'API URL', {
+      required: false,
+      value: 'https://api.airbrake.io',
+      description: 'Keep https://api.airbrake.io (Airbrake cloud).',
+    }),
+    textField('authToken', 'User API key', {
+      description: 'Airbrake → your avatar → Profile → "User API key" (not the project key).',
+    }),
   ],
 
   verifyCredentials,

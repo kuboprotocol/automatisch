@@ -1,13 +1,9 @@
-import { URL } from 'node:url';
+import { instanceBase } from './instance.js';
 
+// API: <instância>/api (v1/...). OAuth (/oauth/token): direto na instância.
 const setBaseUrl = ($, requestConfig) => {
-  if (requestConfig.additionalProperties?.skipAddingBaseUrl) {
-    requestConfig.baseURL = $.auth.data.instanceUrl;
-    return requestConfig;
-  }
-
-  requestConfig.baseURL = new URL('api', $.auth.data.instanceUrl).toString();
-
+  const base = instanceBase($.auth.data.instanceUrl);
+  requestConfig.baseURL = requestConfig.additionalProperties?.skipAddingBaseUrl ? base : `${base}/api`;
   return requestConfig;
 };
 

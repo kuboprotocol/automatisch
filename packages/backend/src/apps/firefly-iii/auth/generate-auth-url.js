@@ -1,26 +1,14 @@
-import { URL, URLSearchParams } from 'url';
+import { URLSearchParams } from 'node:url';
+import { newState, redirectUri } from '../../../helpers/vertal-app-kit.js';
+import { instanceBase } from '../common/instance.js';
 
 export default async function generateAuthUrl($) {
-  const oauthRedirectUrlField = $.app.auth.fields.find(
-    (field) => field.key == 'oAuthRedirectUrl'
-  );
-
-  const redirectUri = oauthRedirectUrlField.value;
-
-  const searchParams = new URLSearchParams({
+  const params = new URLSearchParams({
     client_id: $.auth.data.clientId,
-    redirect_uri: redirectUri,
+    redirect_uri: redirectUri($),
     response_type: 'code',
+    scope: '',
+    state: newState(),
   });
-
-  const instanceUrl = $.auth.data.instanceUrl;
-
-  const url = new URL(
-    `/oauth/authorize?${searchParams.toString()}`,
-    instanceUrl
-  );
-
-  await $.auth.set({
-    url,
-  });
+  await $.auth.set({ url: `${instanceBase($.auth.data.instanceUrl)}/oauth/authorize?${params.toString()}` });
 }
