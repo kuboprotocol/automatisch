@@ -12,6 +12,7 @@ const verifyCredentials = async ($) => {
     client_id: $.auth.data.consumerKey,
     client_secret: $.auth.data.consumerSecret,
     redirect_uri: redirectUri,
+    ...($.auth.data.codeVerifier ? { code_verifier: $.auth.data.codeVerifier } : {}),
   });
   const { data } = await $.http.post(
     `${$.auth.data.oauth2Url}/token?${searchParams}`
