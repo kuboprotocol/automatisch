@@ -12,6 +12,7 @@
 //   POST   /internal/vertal/connections/:id/complete    {formattedData} → {verified, screenName}
 //   POST   /internal/vertal/connections/:id/verify      → {verified, screenName}
 //   DELETE /internal/vertal/connections/:id
+//   POST   /internal/vertal/connections/find  {appKeys, userId} → {ids} (conexões cujo login é desse usuário do provedor)
 //   POST   /internal/vertal/run      {appKey, kind: action|trigger, key, connectionId?, parameters}
 //   POST   /internal/vertal/dynamic-data {appKey, key, connectionId?, parameters}
 import crypto from 'node:crypto';
@@ -25,6 +26,7 @@ import EarlyExitError from '@/errors/early-exit.js';
 import AlreadyProcessedError from '@/errors/already-processed.js';
 import HttpError from '@/errors/http.js';
 import { logger } from '@/helpers/logger.js';
+import { matchesProviderUser } from '@/helpers/vertal-match.js';
 
 const router = Router();
 
@@ -249,6 +251,31 @@ router.delete('/connections/:id', async (req, res) => {
   }
   await conn.$query().delete();
   return res.status(200).json({ ok: true });
+});
+
+// Acha as conexões de um usuário do provedor (ex.: "Remover app" / exclusão de dados
+// da Meta, que manda só o ID do usuário no app). Compara o userId guardado no login.
+router.post('/connections/find', async (req, res) => {
+  const { appKeys, userId } = req.body || {};
+  if (
+    !Array.isArray(appKeys) ||
+    appKeys.length === 0 ||
+    appKeys.length > 10 ||
+    !appKeys.every((k) => typeof k === 'string' && /^[a-z0-9-]{1,64}$/.test(k)) ||
+    typeof userId !== 'string' ||
+    !/^[0-9A-Za-z_-]{1,64}$/.test(userId)
+  ) {
+    return res.status(400).json({ error: 'invalid_input' });
+  }
+  const user = await serviceUser();
+  const conns = await user
+    .$relatedQuery('connections')
+    .whereIn('key', appKeys)
+    .limit(2000);
+  const ids = conns
+    .filter((c) => matchesProviderUser(c.formattedData, userId))
+    .map((c) => ({ id: c.id, appKey: c.key }));
+  return res.status(200).json({ ok: true, connections: ids });
 });
 
 function withTimeout(promise, ms) {
