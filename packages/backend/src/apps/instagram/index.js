@@ -5,7 +5,8 @@ import triggers from './triggers/index.js';
 import dynamicData from './dynamic-data/index.js';
 
 // Instagram profissional (Business/Creator) ligado a uma Página do Facebook,
-// pelo login do Facebook (Instagram Graph API).
+// pelo login do Facebook (Instagram Graph API + mensagens diretas pela Messenger Platform).
+// Mesmo app da Meta dos conectores Facebook / WhatsApp / Meta Ads.
 export default defineApp({
   name: 'Instagram',
   key: 'instagram',
@@ -21,7 +22,9 @@ export default defineApp({
     'instagram_basic',
     'instagram_content_publish',
     'instagram_manage_insights',
+    'instagram_manage_messages',
     'pages_show_list',
+    'pages_manage_metadata',
     'pages_read_engagement',
     'business_management',
   ]),

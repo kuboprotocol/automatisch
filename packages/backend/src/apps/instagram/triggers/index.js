@@ -1,7 +1,7 @@
 import defineTrigger from '../../../helpers/define-trigger.js';
 import { GRAPH_BASE } from '../../../helpers/meta-graph.js';
 import { dynamicArg, pushItems, stringArg } from '../../../helpers/vertal-app-kit.js';
-import { listIgAccounts } from '../common.js';
+import { conversationMessages, listConversations, listIgAccounts } from '../common.js';
 
 const account = dynamicArg('igUserId', 'Instagram account', 'listIgAccounts');
 
@@ -52,4 +52,27 @@ const insights = defineTrigger({
   },
 });
 
-export default [accounts, media, insights];
+const conversations = defineTrigger({
+  name: 'Direct message conversations',
+  key: 'listConversations',
+  pollInterval: 15,
+  description: 'Latest DM conversations of the account (contact and last message).',
+  arguments: [account],
+  async run($) {
+    pushItems($, await listConversations($, $.step.parameters.igUserId), (c) => `${c.id}-${c.updatedTime || ''}`);
+  },
+});
+
+const messages = defineTrigger({
+  name: 'Messages of a conversation',
+  key: 'conversationMessages',
+  pollInterval: 15,
+  description: 'Latest messages of one DM conversation (newest first).',
+  arguments: [account, stringArg('conversationId', 'Conversation ID', { required: true })],
+  async run($) {
+    const { igUserId, conversationId } = $.step.parameters;
+    pushItems($, await conversationMessages($, igUserId, conversationId));
+  },
+});
+
+export default [accounts, media, insights, conversations, messages];
