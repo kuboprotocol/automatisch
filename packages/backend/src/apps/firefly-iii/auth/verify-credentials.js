@@ -1,41 +1,42 @@
+import { URLSearchParams } from 'node:url';
+import { redirectUri } from '../../../helpers/vertal-app-kit.js';
 import getCurrentUser from '../common/get-current-user.js';
 
 const verifyCredentials = async ($) => {
-  const oauthRedirectUrlField = $.app.auth.fields.find(
-    (field) => field.key == 'oAuthRedirectUrl'
+  if (!$.auth.data.code) {
+    // Avançado: Personal Access Token, sem login OAuth.
+    if (!$.auth.data.personalAccessToken) throw new Error('Missing authorization code');
+    const user = await getCurrentUser($);
+    await $.auth.set({ screenName: user?.attributes?.email || 'Firefly III' });
+    return;
+  }
+
+  const { data } = await $.http.post(
+    '/oauth/token',
+    new URLSearchParams({
+      grant_type: 'authorization_code',
+      client_id: $.auth.data.clientId,
+      client_secret: $.auth.data.clientSecret,
+      code: $.auth.data.code,
+      redirect_uri: redirectUri($),
+    }).toString(),
+    {
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+      additionalProperties: { skipAddingBaseUrl: true, skipAddingAuthHeader: true },
+    }
   );
-
-  const redirectUri = oauthRedirectUrlField.value;
-
-  const { data } = await $.http.post('/oauth/token', {
-    client_id: $.auth.data.clientId,
-    client_secret: $.auth.data.clientSecret,
-    code: $.auth.data.code,
-    grant_type: 'authorization_code',
-    redirect_uri: redirectUri,
-  }, {
-    additionalProperties: {
-      skipAddingBaseUrl: true,
-    },
-  });
+  if (!data?.access_token) throw new Error('Firefly III: no access token returned');
 
   await $.auth.set({
     accessToken: data.access_token,
-    tokenType: data.token_type,
-  });
-
-  const currentUser = await getCurrentUser($);
-
-  await $.auth.set({
-    clientId: $.auth.data.clientId,
-    clientSecret: $.auth.data.clientSecret,
-    scope: $.auth.data.scope,
-    idToken: data.id_token,
+    tokenType: data.token_type || 'Bearer',
     expiresIn: data.expires_in,
-    refreshToken: data.refresh_token,
-    resourceName: currentUser.resourceName,
-    screenName: currentUser.attributes.email,
+    ...(data.refresh_token ? { refreshToken: data.refresh_token } : {}),
+    code: null,
   });
+
+  const user = await getCurrentUser($);
+  await $.auth.set({ screenName: user?.attributes?.email || 'Firefly III' });
 };
 
 export default verifyCredentials;

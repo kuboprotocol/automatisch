@@ -11,7 +11,7 @@ export default {
       readOnly: false,
       value: null,
       placeholder: null,
-      description: 'API key of the VirtualQ API service.',
+      description: 'VirtualQ dashboard (dashboard.virtualq.tech) → Contact Center → API Tokens → New token. Copy it right away: it is shown only once.',
       clickToCopy: false,
     },
   ],

@@ -139,6 +139,10 @@ export function describeApp(app) {
       placeholder: f.placeholder || undefined,
       value: f.value ?? undefined,
       options: Array.isArray(f.options) ? f.options : undefined,
+      // advanced: alternativa ao login OAuth (token pessoal), mostrada em "Avançado".
+      // oauthOnly: só é exigido no login OAuth (client id/secret), não no modo token.
+      advanced: f.advanced === true ? true : undefined,
+      oauthOnly: f.oauthOnly === true ? true : undefined,
     }));
   return {
     key: app.key,

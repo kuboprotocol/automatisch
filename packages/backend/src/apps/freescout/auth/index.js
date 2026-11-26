@@ -1,41 +1,18 @@
 import verifyCredentials from './verify-credentials.js';
 import isStillVerified from './is-still-verified.js';
+import { textField } from '../../../helpers/vertal-app-kit.js';
 
+// FreeScout (auto-hospedado) só autentica a API por chave (módulo oficial "API & Webhooks");
+// não existe OAuth oficial. Chave: Manage → API & Webhooks (global) ou "My API Keys" (por usuário).
 export default {
   fields: [
-    {
-      key: 'screenName',
-      label: 'Screen Name',
-      type: 'string',
-      required: true,
-      readOnly: false,
-      value: null,
-      placeholder: null,
-      description: 'Screen name of your connection to be shown in the UI.',
-      clickToCopy: false,
-    },
-    {
-      key: 'instanceUrl',
-      label: 'FreeScout instance URL',
-      type: 'string',
-      required: true,
-      readOnly: false,
-      description: 'Your FreeScout instance URL.',
-      docUrl: 'https://automatisch.io/docs/freescout#instance-url',
-      clickToCopy: false,
-    },
-    {
-      key: 'apiKey',
-      label: 'API Key',
-      type: 'string',
-      required: true,
-      readOnly: false,
-      value: null,
-      placeholder: null,
-      description: 'FreeScout API key of your account.',
-      docUrl: 'https://automatisch.io/docs/freescout#api-key',
-      clickToCopy: false,
-    },
+    textField('screenName', 'Screen Name', { description: 'Name of this connection.' }),
+    textField('instanceUrl', 'FreeScout instance URL', {
+      description: 'Address of your FreeScout, e.g. https://support.example.com (the API & Webhooks module must be active).',
+    }),
+    textField('apiKey', 'API Key', {
+      description: 'FreeScout → Manage → API & Webhooks → API Key (or your personal key under "My API Keys").',
+    }),
   ],
 
   verifyCredentials,
