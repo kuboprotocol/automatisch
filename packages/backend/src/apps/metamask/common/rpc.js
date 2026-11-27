@@ -65,7 +65,8 @@ async function send(url, body) {
 let ids = 1;
 
 export async function rpc(url, method, params = []) {
-  if (!READ_METHODS.has(method)) throw new Error(`method_not_allowed:${method}`);
+  if (!READ_METHODS.has(method))
+    throw new Error(`method_not_allowed:${method}`);
   const data = await send(url, { jsonrpc: '2.0', id: ids++, method, params });
   if (!data || data.error) {
     const e = new Error(`rpc_error:${data?.error?.message ?? 'empty'}`);
@@ -79,16 +80,26 @@ export async function rpc(url, method, params = []) {
 export async function rpcBatch(url, calls) {
   if (!calls.length) return [];
   for (const c of calls) {
-    if (!READ_METHODS.has(c.method)) throw new Error(`method_not_allowed:${c.method}`);
+    if (!READ_METHODS.has(c.method))
+      throw new Error(`method_not_allowed:${c.method}`);
   }
-  const body = calls.map((c) => ({ jsonrpc: '2.0', id: ids++, method: c.method, params: c.params || [] }));
+  const body = calls.map((c) => ({
+    jsonrpc: '2.0',
+    id: ids++,
+    method: c.method,
+    params: c.params || [],
+  }));
   let data = null;
   try {
     data = await send(url, body);
   } catch {
     data = null;
   }
-  if (Array.isArray(data) && data.length === body.length && data.every((d) => d && !d.error)) {
+  if (
+    Array.isArray(data) &&
+    data.length === body.length &&
+    data.every((d) => d && !d.error)
+  ) {
     const byId = new Map(data.map((d) => [d.id, d.result]));
     return body.map((b) => byId.get(b.id));
   }

@@ -15,7 +15,8 @@ const TEXTS = {
     invalidKey: 'MetaMask (Vertal Wallet): chave do Vertal Fluxos inválida.',
     migrationPending:
       'MetaMask (Vertal Wallet): configuração pendente no Vertal Dev (tabela de carteiras).',
-    badNetwork: 'MetaMask (Vertal Wallet): rede inválida (use Sepolia ou Ethereum).',
+    badNetwork:
+      'MetaMask (Vertal Wallet): rede inválida (use Sepolia ou Ethereum).',
     badToken: 'MetaMask (Vertal Wallet): endereço do token ERC-20 inválido.',
     rpcUnavailable:
       'MetaMask (Vertal Wallet): o RPC da rede não respondeu. Tente mais tarde ou configure outro RPC.',
@@ -32,7 +33,8 @@ const TEXTS = {
     invalidKey: 'MetaMask (Vertal Wallet): invalid Vertal Fluxos key.',
     migrationPending:
       'MetaMask (Vertal Wallet): pending setup on Vertal Dev (wallets table).',
-    badNetwork: 'MetaMask (Vertal Wallet): invalid network (use Sepolia or Ethereum).',
+    badNetwork:
+      'MetaMask (Vertal Wallet): invalid network (use Sepolia or Ethereum).',
     badToken: 'MetaMask (Vertal Wallet): invalid ERC-20 token address.',
     rpcUnavailable:
       'MetaMask (Vertal Wallet): the network RPC did not answer. Try later or configure another RPC.',
@@ -49,7 +51,8 @@ const TEXTS = {
     invalidKey: 'MetaMask (Vertal Wallet): clave de Vertal Fluxos inválida.',
     migrationPending:
       'MetaMask (Vertal Wallet): configuración pendiente en Vertal Dev (tabla de billeteras).',
-    badNetwork: 'MetaMask (Vertal Wallet): red inválida (usa Sepolia o Ethereum).',
+    badNetwork:
+      'MetaMask (Vertal Wallet): red inválida (usa Sepolia o Ethereum).',
     badToken: 'MetaMask (Vertal Wallet): dirección de token ERC-20 inválida.',
     rpcUnavailable:
       'MetaMask (Vertal Wallet): el RPC de la red no respondió. Inténtalo más tarde o configura otro RPC.',

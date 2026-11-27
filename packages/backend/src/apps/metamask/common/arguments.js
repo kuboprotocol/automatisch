@@ -10,7 +10,10 @@ export const networkArgument = {
   variables: false,
   description:
     'Sepolia (testnet) é o padrão. Ethereum mainnet só para leitura. · Network (Sepolia default; mainnet read-only) · Red (Sepolia por defecto; mainnet solo lectura)',
-  options: Object.values(NETWORKS).map((n) => ({ label: n.name, value: n.key })),
+  options: Object.values(NETWORKS).map((n) => ({
+    label: n.name,
+    value: n.key,
+  })),
 };
 
 export const walletArgument = {

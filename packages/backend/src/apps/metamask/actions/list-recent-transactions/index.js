@@ -4,7 +4,11 @@ import {
   tokenArgument,
   walletArgument,
 } from '../../common/arguments.js';
-import { defaultWindow, fetchTransactions, txItem } from '../../common/chain.js';
+import {
+  defaultWindow,
+  fetchTransactions,
+  txItem,
+} from '../../common/chain.js';
 import { scanBlocks } from '../../common/config.js';
 import { stepContext } from '../../common/step.js';
 
@@ -43,7 +47,9 @@ export default defineAction({
   async run($) {
     const { net, token, address } = await stepContext($);
     const p = $.step.parameters || {};
-    const direction = ['all', 'in', 'out'].includes(p.direction) ? p.direction : 'all';
+    const direction = ['all', 'in', 'out'].includes(p.direction)
+      ? p.direction
+      : 'all';
     const limit = Math.min(50, Math.max(1, Math.floor(Number(p.limit) || 10)));
     const { fromBlock, toBlock } = await defaultWindow(net);
     // Com Etherscan o histórico não fica preso à janela de blocos recentes.
@@ -61,7 +67,14 @@ export default defineAction({
     let source = r.source;
     if (r.source === 'etherscan' && txs.length < limit) {
       const full = await fetchTransactions({
-        vertalKey: $.auth.data.vertalKey, net, address, token, direction, limit, fromBlock: 0, toBlock,
+        vertalKey: $.auth.data.vertalKey,
+        net,
+        address,
+        token,
+        direction,
+        limit,
+        fromBlock: 0,
+        toBlock,
       });
       if (full.source === 'etherscan') {
         txs = full.txs;
@@ -74,7 +87,10 @@ export default defineAction({
         chainId: net.chainId,
         carteira: address,
         fonte: source,
-        blocos: source === 'rpc' ? { de: fromBlock, ate: toBlock, quantidade: scanBlocks() } : null,
+        blocos:
+          source === 'rpc'
+            ? { de: fromBlock, ate: toBlock, quantidade: scanBlocks() }
+            : null,
         aviso:
           source === 'rpc'
             ? `Sem Etherscan: só os últimos ${scanBlocks()} blocos confirmados foram lidos.`

@@ -1,3 +1,4 @@
+/* global BigInt */
 import defineTrigger from '../../../../helpers/define-trigger.js';
 import {
   networkArgument,
@@ -37,7 +38,9 @@ export default defineTrigger({
     let previous = previousFromInternalId($.flow?.lastInternalId, key);
     if (previous === null && !$.execution?.testRun) {
       try {
-        previous = (await balanceOf(net, address, token, Math.max(0, head - scanBlocks()))).wei;
+        previous = (
+          await balanceOf(net, address, token, Math.max(0, head - scanBlocks()))
+        ).wei;
       } catch {
         previous = current.wei; // estado antigo indisponível: só começa a comparar a partir de agora
       }
@@ -57,7 +60,8 @@ export default defineTrigger({
         bloco: head,
         saldoAtual: fromUnits(current.wei, current.decimals, 8),
         saldoAtualWei: current.wei.toString(),
-        saldoAnterior: previous === null ? null : fromUnits(previous, current.decimals, 8),
+        saldoAnterior:
+          previous === null ? null : fromUnits(previous, current.decimals, 8),
         saldoAnteriorWei: previous === null ? null : previous.toString(),
         diferenca: diff === null ? null : fromUnits(diff, current.decimals, 8),
         diferencaWei: diff === null ? null : diff.toString(),

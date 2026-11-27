@@ -29,7 +29,10 @@ export async function callWallet(vertalKey, payload, { timeout = 20000 } = {}) {
   }
   let data;
   try {
-    ({ data } = await transport.post(walletUrl(), payload, { headers, timeout }));
+    ({ data } = await transport.post(walletUrl(), payload, {
+      headers,
+      timeout,
+    }));
   } catch (error) {
     const code = error?.response?.data?.error;
     if (code && ERROR_KEYS[code]) throw new Error(msg(ERROR_KEYS[code]));
@@ -75,7 +78,10 @@ export function resetServerEtherscanCache() {
   serverEtherscanOffUntil = 0;
 }
 
-export async function serverTxList(vertalKey, { chainId, tokenAddress, startBlock, limit }) {
+export async function serverTxList(
+  vertalKey,
+  { chainId, tokenAddress, startBlock, limit }
+) {
   if (transport.now() < serverEtherscanOffUntil) return null;
   let data;
   try {

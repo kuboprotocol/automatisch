@@ -1,3 +1,4 @@
+/* global BigInt */
 // Leituras na rede (Sepolia / Ethereum): saldo em ETH ou ERC-20, metadados do token e transações.
 // Fonte das transações, nesta ordem: Etherscan com a chave do Railway → Etherscan pela chave do Vertal Dev →
 // varredura limitada por RPC público (blocos recentes para ETH; logs Transfer para ERC-20).
@@ -26,7 +27,8 @@ const big = (h) => {
     return 0n;
   }
 };
-export const pad32 = (address) => `0x${address.toLowerCase().replace(/^0x/, '').padStart(64, '0')}`;
+export const pad32 = (address) =>
+  `0x${address.toLowerCase().replace(/^0x/, '').padStart(64, '0')}`;
 const topicAddress = (t) => (t ? `0x${t.slice(-40)}`.toLowerCase() : null);
 
 export function fromUnits(v, decimals = 18, maxFrac = 6) {
@@ -35,7 +37,11 @@ export function fromUnits(v, decimals = 18, maxFrac = 6) {
   const a = neg ? -value : value;
   const base = 10n ** BigInt(decimals);
   const int = a / base;
-  const frac = (a % base).toString().padStart(decimals, '0').slice(0, maxFrac).replace(/0+$/, '');
+  const frac = (a % base)
+    .toString()
+    .padStart(decimals, '0')
+    .slice(0, maxFrac)
+    .replace(/0+$/, '');
   return `${neg ? '-' : ''}${int}${frac ? `.${frac}` : ''}`;
 }
 
@@ -50,7 +56,9 @@ export async function ethBalance(net, address, block) {
 
 export async function tokenBalance(net, token, address, block) {
   const data = `${SEL_BALANCE_OF}${pad32(address).slice(2)}`;
-  return big(await rpc(rpcUrl(net), 'eth_call', [{ to: token, data }, hex(block)]));
+  return big(
+    await rpc(rpcUrl(net), 'eth_call', [{ to: token, data }, hex(block)])
+  );
 }
 
 /** symbol() string ou bytes32 → texto curto. */
@@ -64,7 +72,9 @@ export function decodeSymbol(h) {
   } else {
     bytes = s.slice(0, 64).replace(/(00)+$/, '');
   }
-  const text = Buffer.from(bytes, 'hex').toString('utf8').replace(/[^\x20-\x7e]/g, '');
+  const text = Buffer.from(bytes, 'hex')
+    .toString('utf8')
+    .replace(/[^\x20-\x7e]/g, '');
   return text.slice(0, 16) || null;
 }
 
@@ -73,12 +83,16 @@ export async function tokenMeta(net, token) {
   const k = `${net.chainId}:${token}`;
   if (metaCache.has(k)) return metaCache.get(k);
   const [dec, sym] = await rpcBatch(rpcUrl(net), [
-    { method: 'eth_call', params: [{ to: token, data: SEL_DECIMALS }, 'latest'] },
+    {
+      method: 'eth_call',
+      params: [{ to: token, data: SEL_DECIMALS }, 'latest'],
+    },
     { method: 'eth_call', params: [{ to: token, data: SEL_SYMBOL }, 'latest'] },
   ]).catch(() => [null, null]);
   const d = Number(big(dec));
   const meta = {
-    decimals: Number.isInteger(d) && d >= 0 && d <= 36 && dec && dec !== '0x' ? d : 18,
+    decimals:
+      Number.isInteger(d) && d >= 0 && d <= 36 && dec && dec !== '0x' ? d : 18,
     symbol: decodeSymbol(sym) || `${token.slice(0, 6)}…${token.slice(-4)}`,
   };
   metaCache.set(k, meta);
@@ -90,7 +104,10 @@ export async function balanceOf(net, address, token, block) {
     const wei = await ethBalance(net, address, block);
     return { wei, decimals: 18, symbol: 'ETH' };
   }
-  const [wei, meta] = await Promise.all([tokenBalance(net, token, address, block), tokenMeta(net, token)]);
+  const [wei, meta] = await Promise.all([
+    tokenBalance(net, token, address, block),
+    tokenMeta(net, token),
+  ]);
   return { wei, decimals: meta.decimals, symbol: meta.symbol };
 }
 
@@ -113,7 +130,14 @@ function tx(fields) {
 }
 
 /** Etherscan API v2 direto (chave no Railway). Mais novo primeiro; null em falha. */
-export async function etherscanDirect(key, net, address, token, startBlock, limit) {
+export async function etherscanDirect(
+  key,
+  net,
+  address,
+  token,
+  startBlock,
+  limit
+) {
   try {
     const params = {
       chainid: String(net.chainId),
@@ -128,8 +152,12 @@ export async function etherscanDirect(key, net, address, token, startBlock, limi
       apikey: key,
     };
     if (token) params.contractaddress = token;
-    const { data } = await transport.get('https://api.etherscan.io/v2/api', { params, timeout: 15000 });
-    if (!Array.isArray(data?.result)) return data?.message === 'No transactions found' ? [] : null;
+    const { data } = await transport.get('https://api.etherscan.io/v2/api', {
+      params,
+      timeout: 15000,
+    });
+    if (!Array.isArray(data?.result))
+      return data?.message === 'No transactions found' ? [] : null;
     return data.result.slice(0, limit).map((t) =>
       tx({
         hash: t.hash,
@@ -138,10 +166,18 @@ export async function etherscanDirect(key, net, address, token, startBlock, limi
         from: t.from,
         to: t.to,
         valueWei: /^\d+$/.test(String(t.value ?? '')) ? String(t.value) : '0',
-        tokenAddress: token ? String(t.contractAddress || token).toLowerCase() : null,
+        tokenAddress: token
+          ? String(t.contractAddress || token).toLowerCase()
+          : null,
         tokenSymbol: token ? t.tokenSymbol || null : null,
-        tokenDecimals: token && /^\d+$/.test(String(t.tokenDecimal ?? '')) ? Number(t.tokenDecimal) : null,
-        logIndex: token && /^\d+$/.test(String(t.logIndex ?? '')) ? Number(t.logIndex) : null,
+        tokenDecimals:
+          token && /^\d+$/.test(String(t.tokenDecimal ?? ''))
+            ? Number(t.tokenDecimal)
+            : null,
+        logIndex:
+          token && /^\d+$/.test(String(t.logIndex ?? ''))
+            ? Number(t.logIndex)
+            : null,
         status: t.isError === '1' ? 'failed' : 'ok',
       })
     );
@@ -154,7 +190,10 @@ const LOG_CHUNK = 1000;
 
 async function tokenLogs(net, token, address, fromBlock, toBlock, side) {
   const out = [];
-  const topics = side === 'in' ? [TRANSFER_TOPIC, null, pad32(address)] : [TRANSFER_TOPIC, pad32(address)];
+  const topics =
+    side === 'in'
+      ? [TRANSFER_TOPIC, null, pad32(address)]
+      : [TRANSFER_TOPIC, pad32(address)];
   for (let start = fromBlock; start <= toBlock; start += LOG_CHUNK) {
     const end = Math.min(toBlock, start + LOG_CHUNK - 1);
     const logs = await rpc(rpcUrl(net), 'eth_getLogs', [
@@ -191,13 +230,18 @@ async function ethScan(net, address, fromBlock, toBlock, direction) {
       const [b0, b1, n0, n1] = await rpcBatch(url, [
         { method: 'eth_getBalance', params: [address, hex(fromBlock - 1)] },
         { method: 'eth_getBalance', params: [address, hex(toBlock)] },
-        { method: 'eth_getTransactionCount', params: [address, hex(fromBlock - 1)] },
+        {
+          method: 'eth_getTransactionCount',
+          params: [address, hex(fromBlock - 1)],
+        },
         { method: 'eth_getTransactionCount', params: [address, hex(toBlock)] },
       ]);
       const sameNonce = big(n0) === big(n1);
       const sameBalance = big(b0) === big(b1);
-      if (sameNonce && (sameBalance || direction === 'out')) return { txs: [], skipped: true };
-      if (direction === 'in' && sameNonce && big(b1) < big(b0)) return { txs: [], skipped: true };
+      if (sameNonce && (sameBalance || direction === 'out'))
+        return { txs: [], skipped: true };
+      if (direction === 'in' && sameNonce && big(b1) < big(b0))
+        return { txs: [], skipped: true };
     } catch {
       // estado antigo podado no RPC: segue para a varredura
     }
@@ -207,7 +251,8 @@ async function ethScan(net, address, fromBlock, toBlock, direction) {
   for (let end = toBlock; end >= fromBlock; end -= BATCH) {
     const start = Math.max(fromBlock, end - BATCH + 1);
     const calls = [];
-    for (let b = end; b >= start; b -= 1) calls.push({ method: 'eth_getBlockByNumber', params: [hex(b), true] });
+    for (let b = end; b >= start; b -= 1)
+      calls.push({ method: 'eth_getBlockByNumber', params: [hex(b), true] });
     const blocks = await rpcBatch(url, calls);
     for (const block of blocks) {
       if (!block || !Array.isArray(block.transactions)) continue;
@@ -217,7 +262,11 @@ async function ethScan(net, address, fromBlock, toBlock, direction) {
         const from = (t.from || '').toLowerCase();
         const incoming = to === address && big(t.value) > 0n;
         const outgoing = from === address;
-        if ((direction === 'in' && incoming) || (direction === 'out' && outgoing) || (direction === 'all' && (incoming || outgoing))) {
+        if (
+          (direction === 'in' && incoming) ||
+          (direction === 'out' && outgoing) ||
+          (direction === 'all' && (incoming || outgoing))
+        ) {
           out.push(
             tx({
               hash: t.hash,
@@ -235,28 +284,46 @@ async function ethScan(net, address, fromBlock, toBlock, direction) {
   return { txs: out, skipped: false };
 }
 
-const sortDesc = (a, b) => b.blockNumber - a.blockNumber || (b.logIndex ?? 0) - (a.logIndex ?? 0);
+const sortDesc = (a, b) =>
+  b.blockNumber - a.blockNumber || (b.logIndex ?? 0) - (a.logIndex ?? 0);
 
 /**
  * Transações da carteira (mais novas primeiro).
  * direction: 'in' (recebidas), 'out' (enviadas) ou 'all'. fromBlock/toBlock limitam a janela.
  */
-export async function fetchTransactions({ vertalKey, net, address, token, direction = 'in', limit = 20, fromBlock, toBlock }) {
+export async function fetchTransactions({
+  vertalKey,
+  net,
+  address,
+  token,
+  direction = 'in',
+  limit = 20,
+  fromBlock,
+  toBlock,
+}) {
   const want = (t) => {
     if (t.blockNumber < fromBlock || t.blockNumber > toBlock) return false;
     const incoming = t.to === address;
     const outgoing = t.from === address;
-    if (direction === 'in') return incoming && (token || BigInt(t.valueWei || '0') > 0n);
+    if (direction === 'in')
+      return incoming && (token || BigInt(t.valueWei || '0') > 0n);
     if (direction === 'out') return outgoing;
     return incoming || outgoing;
   };
   const key = etherscanKey();
   // Pede mais itens do que o limite porque o Etherscan também devolve as enviadas.
   const fetchLimit = Math.min(50, Math.max(limit * 2, 20));
-  let txs = key ? await etherscanDirect(key, net, address, token, fromBlock, fetchLimit) : null;
+  let txs = key
+    ? await etherscanDirect(key, net, address, token, fromBlock, fetchLimit)
+    : null;
   let source = txs ? 'etherscan' : null;
   if (!txs && vertalKey) {
-    txs = await serverTxList(vertalKey, { chainId: net.chainId, tokenAddress: token, startBlock: fromBlock, limit: fetchLimit });
+    txs = await serverTxList(vertalKey, {
+      chainId: net.chainId,
+      tokenAddress: token,
+      startBlock: fromBlock,
+      limit: fetchLimit,
+    });
     if (txs) {
       source = 'etherscan';
       txs = txs.map((t) => tx({ ...t, from: t.from, to: t.to }));
@@ -268,9 +335,16 @@ export async function fetchTransactions({ vertalKey, net, address, token, direct
     if (token) {
       const sides = direction === 'all' ? ['in', 'out'] : [direction];
       txs = [];
-      for (const side of sides) txs.push(...(await tokenLogs(net, token, address, fromBlock, toBlock, side)));
+      for (const side of sides)
+        txs.push(
+          ...(await tokenLogs(net, token, address, fromBlock, toBlock, side))
+        );
       const meta = await tokenMeta(net, token);
-      txs = txs.map((t) => ({ ...t, tokenSymbol: meta.symbol, tokenDecimals: meta.decimals }));
+      txs = txs.map((t) => ({
+        ...t,
+        tokenSymbol: meta.symbol,
+        tokenDecimals: meta.decimals,
+      }));
     } else {
       const r = await ethScan(net, address, fromBlock, toBlock, direction);
       txs = r.txs;
@@ -295,7 +369,10 @@ export async function fetchTransactions({ vertalKey, net, address, token, direct
 export async function defaultWindow(net, sinceBlock = null) {
   const toBlock = await headBlock(net);
   const floor = Math.max(0, toBlock - scanBlocks() + 1);
-  const fromBlock = Number.isInteger(sinceBlock) && sinceBlock + 1 > floor ? Math.min(sinceBlock + 1, toBlock) : floor;
+  const fromBlock =
+    Number.isInteger(sinceBlock) && sinceBlock + 1 > floor
+      ? Math.min(sinceBlock + 1, toBlock)
+      : floor;
   return { fromBlock, toBlock };
 }
 

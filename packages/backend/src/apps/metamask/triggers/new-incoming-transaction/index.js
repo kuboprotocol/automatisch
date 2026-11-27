@@ -4,7 +4,11 @@ import {
   tokenArgument,
   walletArgument,
 } from '../../common/arguments.js';
-import { defaultWindow, fetchTransactions, txItem } from '../../common/chain.js';
+import {
+  defaultWindow,
+  fetchTransactions,
+  txItem,
+} from '../../common/chain.js';
 import { stepContext } from '../../common/step.js';
 
 // internalId = tx:<chainId>:<bloco>:<hash>:<logIndex|-> — o bloco do último item processado diz de onde
